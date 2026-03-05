@@ -1,6 +1,6 @@
 # Home Network: Accessing Any Machine By Name
 
-You want to hit `http://girlfriends-mac:8765` from any device on your network
+You want to hit `http://my-mac:8765` from any device on your network
 instead of messing with IP addresses like `192.168.1.42`. Here's how.
 
 ---
@@ -24,7 +24,7 @@ Every Mac broadcasts its name on the local network using a protocol called mDNS
 
 ### Find the Mac's local hostname:
 
-On the Mac running Breathwork, open **System Settings** > **General** > **Sharing**.
+On the Mac running the app, open **System Settings** > **General** > **Sharing**.
 
 Look for **Local hostname** at the bottom. It'll say something like:
 
@@ -50,8 +50,8 @@ That's it. This works from:
 
 1. Open **System Settings** > **General** > **Sharing**
 2. Click **Edit** next to the local hostname
-3. Change it to something like `breathwork`
-4. Now the address is: `http://breathwork.local:8765`
+3. Change it to something like `mymac`
+4. Now the address is: `http://mymac.local:8765`
 
 ### Linux Note:
 
@@ -78,7 +78,7 @@ After that, `.local` addresses work from Linux too.
 ## Option 2: Static IP + Router Hostname -- Reliable, Moderate Effort
 
 If you want the IP to never change (even after router reboots), assign a
-static (fixed) IP to the Mac running Breathwork.
+static (fixed) IP to the Mac running the app.
 
 ### Step 1: Log into your router
 
@@ -113,7 +113,7 @@ http://192.168.1.100:8765
 
 Higher-end routers (Unifi, pfSense, OpenWrt, some Netgear/Asus) let you
 assign DNS names to devices. If yours supports it, you can set
-`breathwork.home` or similar, and all devices on the network can use it.
+`mymac.home` or similar, and all devices on the network can use it.
 
 ---
 
@@ -141,7 +141,7 @@ curl -sSL https://install.pi-hole.net | bash
 3. Add a record:
 
 ```
-Domain:  breathwork.home
+Domain:  mymac.home
 IP:      192.168.1.100     (the Mac's static IP from Option 2)
 ```
 
@@ -151,7 +151,7 @@ IP:      192.168.1.100     (the Mac's static IP from Option 2)
 Now every device on your network can use:
 
 ```
-http://breathwork.home:8765
+http://mymac.home:8765
 ```
 
 ### Why Pi-hole is worth it (even beyond this project):
@@ -165,8 +165,8 @@ http://breathwork.home:8765
 ## My Recommendation
 
 **Start with Option 1 (.local).** It already works on Macs and iPhones with
-zero effort. Rename the hostname to `breathwork` and use
-`http://breathwork.local:8765` from everything.
+zero effort. Rename the hostname to `mymac` and use
+`http://mymac.local:8765` from everything.
 
 If you find `.local` unreliable or want it cleaner, do Option 2 (static IP)
 as a fallback.
@@ -179,7 +179,7 @@ Option 3 is for when you catch the networking bug and want to go further.
 
 | Method | Address | Works from | Setup |
 |--------|---------|------------|-------|
-| .local (mDNS) | `http://breathwork.local:8765` | Mac, iPhone, Linux (with avahi) | Rename hostname only |
+| .local (mDNS) | `http://mymac.local:8765` | Mac, iPhone, Linux (with avahi) | Rename hostname only |
 | Static IP | `http://192.168.1.100:8765` | Everything | Router config |
-| Pi-hole DNS | `http://breathwork.home:8765` | Everything | Pi-hole + Router DNS |
+| Pi-hole DNS | `http://mymac.home:8765` | Everything | Pi-hole + Router DNS |
 | Localhost | `http://localhost:8765` | Same machine only | None |
