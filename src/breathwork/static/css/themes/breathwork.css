@@ -1,0 +1,86 @@
+/* Breathwork Theme — Meditative Warm Amber */
+
+:root {
+    --bg-base: #06080f;
+    --bg-surface: rgba(255, 255, 255, 0.025);
+    --bg-surface-hover: rgba(255, 255, 255, 0.045);
+    --accent: rgba(200, 160, 120, 0.9);
+    --accent-dark: rgba(180, 130, 90, 0.9);
+    --accent-light: rgba(210, 170, 130, 0.95);
+    --accent-soft: rgba(200, 160, 120, 0.6);
+    --accent-faint: rgba(200, 160, 120, 0.15);
+    --accent-glow: rgba(200, 160, 120, 0.08);
+    --accent-focus: rgba(200, 160, 120, 0.3);
+    --accent-focus-glow: rgba(200, 160, 120, 0.05);
+    --accent-selection: rgba(200, 160, 120, 0.2);
+    --accent-contrast: #0a0c14;
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-hover: rgba(255, 255, 255, 0.09);
+    --shadow-accent: rgba(180, 140, 100, 0.03);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.06);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.12);
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== ANIMATED BACKGROUND ===== */
+.bg-atmosphere::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 20% 50%, rgba(120, 80, 60, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(70, 60, 90, 0.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(60, 80, 80, 0.06) 0%, transparent 50%);
+    animation: drift 30s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes drift {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, -1%) rotate(0.5deg); }
+    50% { transform: translate(-1%, 2%) rotate(-0.3deg); }
+    75% { transform: translate(1%, -2%) rotate(0.2deg); }
+}
+
+/* ===== BREATHING ORB (empty state) ===== */
+.breathing-orb {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%,
+        rgba(200, 160, 120, 0.15) 0%,
+        rgba(160, 120, 100, 0.08) 40%,
+        rgba(100, 80, 80, 0.03) 70%,
+        transparent 100%);
+    animation: breathe-orb 6s ease-in-out infinite;
+    filter: blur(1px);
+}
+
+@keyframes breathe-orb {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.5;
+        box-shadow: 0 0 40px rgba(200, 160, 120, 0.05);
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+        box-shadow: 0 0 80px rgba(200, 160, 120, 0.1);
+    }
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-glow {
+    background: linear-gradient(90deg,
+        rgba(180, 140, 100, 0.8) 0%,
+        rgba(200, 160, 120, 0.9) 50%,
+        rgba(180, 140, 100, 0.8) 100%);
+    box-shadow: 0 0 12px rgba(200, 160, 120, 0.3);
+}
+
+/* ===== THEME TEXT COLORS ===== */
+.text-warm { color: rgba(200, 160, 120, 0.9); }
+.text-warm-soft { color: rgba(200, 160, 120, 0.6); }
+.border-warm { border-color: rgba(200, 160, 120, 0.15); }

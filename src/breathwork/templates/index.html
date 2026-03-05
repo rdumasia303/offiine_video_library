@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{{ theme.title }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>{{ theme.favicon_emoji | safe }}</text></svg>">
+    <link rel="stylesheet" href="{{ theme.fonts_url | safe }}">
+    <script src="/static/vendor/tailwind.js"></script>
+    <script src="/static/{{ theme.js_file }}"></script>
+    <script>tailwind.config = window.__THEME_CONFIG__.tailwind;</script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script defer src="/static/vendor/alpine.min.js"></script>
+    <link rel="stylesheet" href="/static/{{ theme.css_file }}">
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+
+<body class="bg-atmosphere text-white min-h-screen antialiased font-sans" x-data="app">
+
+    <!-- ═══════════ TOAST ═══════════ -->
+    <div x-show="toast" x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-2"
+         class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60]">
+        <div class="glass px-6 py-3 rounded-2xl shadow-2xl"
+             :class="{
+                 'border-emerald-500/30 text-emerald-300': toast?.type === 'success',
+                 'border-red-500/30 text-red-300': toast?.type === 'error',
+                 'text-white/70': toast?.type === 'info'
+             }">
+            <span class="text-sm font-light tracking-wide" x-text="toast?.message"></span>
+        </div>
+    </div>
+
+    <!-- ═══════════ NAVIGATION ═══════════ -->
+    <nav class="sticky top-0 z-40 backdrop-blur-2xl bg-void/80 border-b border-white/[0.04]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-5">
+            <!-- Top row: logo + actions -->
+            <div class="flex items-center justify-between">
+                <button @click="goToLibrary()" class="group flex items-center gap-3 sm:gap-4 hover:opacity-90 transition-opacity duration-300">
+                    <div class="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full bg-warm-glow animate-ping" style="animation-duration: 4s;"></div>
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gradient-to-br from-warm to-warm-light opacity-80"></div>
+                    </div>
+                    <span class="text-lg sm:text-xl font-serif font-light tracking-wide text-white/70 group-hover:text-white/90 transition-colors duration-300" x-text="copy.brand"></span>
+                </button>
+
+                <div class="flex items-center gap-3 sm:gap-5">
+                    <!-- Active downloads indicator -->
+                    <template x-if="activeDownloads.length > 0">
+                        <div class="flex items-center gap-2 text-warm-soft text-xs font-light tracking-wider">
+                            <div class="w-1.5 h-1.5 rounded-full bg-warm animate-pulse"></div>
+                            <span class="hidden sm:inline" x-text="activeDownloads.length === 1 ? copy.downloadingOne : activeDownloads.length + ' ' + copy.downloadingOne"></span>
+                        </div>
+                    </template>
+
+                    <!-- Search (desktop only -- mobile search is below) -->
+                    <div class="relative hidden sm:block" x-show="view === 'library'">
+                        <input type="text" x-model="searchQuery" placeholder="search..."
+                               class="bg-white/[0.04] border border-white/[0.06] rounded-2xl px-5 py-2.5 pl-10 text-sm
+                                      text-white/80 placeholder-white/25 focus:border-warm-faint input-glow
+                                      w-52 transition-all duration-300 font-light">
+                        <svg class="w-3.5 h-3.5 text-white/30 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+
+                    <!-- Download button -->
+                    <button @click="showDownloadModal = true"
+                            class="btn-warm font-medium px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span class="font-sans font-medium" x-text="copy.addButton"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile search bar (below nav row) -->
+            <div class="sm:hidden mt-3" x-show="view === 'library'">
+                <div class="relative">
+                    <input type="text" x-model="searchQuery" placeholder="search..."
+                           class="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 pl-9 text-sm
+                                  text-white/80 placeholder-white/25 focus:border-warm-faint input-glow
+                                  transition-all duration-300 font-light">
+                    <svg class="w-3.5 h-3.5 text-white/30 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════ DOWNLOAD MODAL ═══════════ -->
+    <div x-show="showDownloadModal"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6"
+         @keydown.escape.window="showDownloadModal = false">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="showDownloadModal = false"></div>
+
+        <!-- Modal - slides up on mobile, centered on desktop -->
+        <div class="relative glass rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 sm:p-10 border-white/[0.06]"
+             x-transition:enter="transition ease-out duration-300 delay-75"
+             x-transition:enter-start="opacity-0 translate-y-8 sm:translate-y-4 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             @click.stop>
+
+            <h2 class="text-2xl sm:text-3xl font-serif font-light mb-2 text-white/80" x-text="copy.downloadTitle"></h2>
+            <p class="text-white/35 text-sm font-light mb-6 sm:mb-8" x-text="copy.downloadSubtitle"></p>
+
+            <form @submit.prevent="submitDownload()" class="space-y-5 sm:space-y-6">
+                <input type="url" x-model="downloadUrl"
+                       placeholder="https://youtube.com/watch?v=..."
+                       class="w-full bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4
+                              text-white/80 placeholder-white/20 input-glow transition-all duration-300
+                              text-sm font-light"
+                       autofocus>
+                <div class="flex gap-3 justify-end">
+                    <button type="button" @click="showDownloadModal = false"
+                            class="px-4 sm:px-5 py-3 rounded-2xl text-white/40 hover:text-white/60 transition text-sm font-light">
+                        Cancel
+                    </button>
+                    <button type="submit" :disabled="downloadSubmitting || !downloadUrl.trim()"
+                            class="btn-warm font-medium px-5 sm:px-6 py-3 rounded-2xl text-sm">
+                        <span x-show="!downloadSubmitting" class="font-sans" x-text="copy.downloadSubmit"></span>
+                        <span x-show="downloadSubmitting" class="font-sans" x-text="copy.downloadSubmitting"></span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Active downloads list -->
+            <template x-if="downloads.length > 0">
+                <div class="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/[0.05]">
+                    <h3 class="text-xs text-white/30 uppercase tracking-[0.2em] mb-4 sm:mb-5 font-light" x-text="copy.downloadsLabel"></h3>
+                    <div class="space-y-3 sm:space-y-4 max-h-48 overflow-y-auto">
+                        <template x-for="dl in downloads" :key="dl.id">
+                            <div class="rounded-2xl bg-white/[0.03] p-3 sm:p-4">
+                                <div class="flex items-center justify-between mb-2 sm:mb-3">
+                                    <span class="text-sm text-white/60 truncate flex-1 font-light"
+                                          x-text="dl.title || dl.url"></span>
+                                    <span class="text-xs ml-3 shrink-0 font-light tracking-wide"
+                                          :class="{
+                                              'text-warm-soft': dl.status === 'downloading',
+                                              'text-emerald-400/70': dl.status === 'completed',
+                                              'text-red-400/70': dl.status === 'failed',
+                                              'text-white/30': dl.status === 'pending' || dl.status === 'processing'
+                                          }"
+                                          x-text="dl.status === 'processing' ? 'processing...' : dl.status"></span>
+                                </div>
+                                <template x-if="dl.status === 'downloading' || dl.status === 'processing'">
+                                    <div class="w-full bg-white/[0.04] rounded-full h-1 overflow-hidden">
+                                        <div class="h-full progress-glow rounded-full transition-all duration-500 ease-out"
+                                             :style="`width: ${Math.round(dl.progress * 100)}%`"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- ═══════════ DELETE CONFIRMATION ═══════════ -->
+    <div x-show="confirmDelete" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+         @keydown.escape.window="confirmDelete = null">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="confirmDelete = null"></div>
+        <div class="relative glass rounded-3xl w-full max-w-sm p-8 sm:p-10 border-white/[0.06]" @click.stop>
+            <h2 class="text-2xl font-serif font-light mb-3 text-white/80" x-text="copy.deleteTitle"></h2>
+            <p class="text-white/35 text-sm font-light mb-8 leading-relaxed" x-text="copy.deleteMessage"></p>
+            <div class="flex gap-3 justify-end">
+                <button @click="confirmDelete = null"
+                        class="px-5 py-2.5 rounded-2xl text-white/40 hover:text-white/60 transition text-sm font-light"
+                        x-text="copy.deleteCancel"></button>
+                <button @click="deleteVideo(confirmDelete)"
+                        class="bg-red-500/10 hover:bg-red-500/15 text-red-300/80 px-5 py-2.5 rounded-2xl
+                               text-sm font-light transition border border-red-500/15 hover:border-red-500/25"
+                        x-text="copy.deleteButton"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ MAIN CONTENT ═══════════ -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-10 relative z-[1]">
+
+        <!-- ═══════════ LIBRARY VIEW ═══════════ -->
+        <div x-show="view === 'library'">
+
+            <!-- Filter bar -->
+            <div class="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
+                <button @click="showFavoritesOnly = false"
+                        class="px-3 sm:px-4 py-1.5 rounded-full text-xs tracking-[0.15em] uppercase transition-all duration-300 font-light"
+                        :class="!showFavoritesOnly
+                            ? 'bg-white/[0.07] text-white/70'
+                            : 'text-white/30 hover:text-white/50'"
+                        x-text="copy.filterAll"></button>
+                <button @click="showFavoritesOnly = true"
+                        class="px-3 sm:px-4 py-1.5 rounded-full text-xs tracking-[0.15em] uppercase transition-all duration-300 font-light"
+                        :class="showFavoritesOnly
+                            ? 'bg-white/[0.07] text-white/70'
+                            : 'text-white/30 hover:text-white/50'"
+                        x-text="copy.filterFavorites"></button>
+                <div class="flex-1"></div>
+                <span class="text-xs text-white/25 font-light tracking-wide"
+                      x-text="filteredVideos.length + ' ' + (filteredVideos.length !== 1 ? copy.itemPlural : copy.itemSingular)"></span>
+            </div>
+
+            <!-- Empty state -->
+            <div x-show="filteredVideos.length === 0" class="text-center py-20 sm:py-32 fade-in">
+                <div class="breathing-orb mx-auto mb-8 sm:mb-10"></div>
+                <h3 class="text-2xl sm:text-3xl font-serif font-light text-white/40 mb-3" x-text="copy.emptyTitle"></h3>
+                <p class="text-white/25 text-sm font-light mb-8 sm:mb-10 max-w-xs mx-auto leading-relaxed" x-text="copy.emptyMessage"></p>
+                <button @click="showDownloadModal = true"
+                        class="btn-warm font-medium px-7 py-3 rounded-2xl text-sm">
+                    <span class="font-sans" x-text="copy.emptyAction"></span>
+                </button>
+            </div>
+
+            <!-- Video grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <template x-for="(video, index) in filteredVideos" :key="video.id">
+                    <div @click="openPlayer(video)"
+                         class="group cursor-pointer glass glass-hover rounded-2xl sm:rounded-3xl overflow-hidden">
+                        <!-- Thumbnail -->
+                        <div class="aspect-video relative overflow-hidden bg-void-100">
+                            <template x-if="video.thumbnail">
+                                <img :src="`/api/videos/${video.id}/thumbnail`"
+                                     class="w-full h-full object-cover transition-all duration-700 ease-out
+                                            group-hover:scale-[1.03] group-hover:brightness-110"
+                                     loading="lazy">
+                            </template>
+                            <template x-if="!video.thumbnail">
+                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-void-100 to-void-200">
+                                    <div class="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white/15 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="absolute inset-0 bg-gradient-to-t from-void/60 via-transparent to-transparent"></div>
+
+                            <!-- Duration -->
+                            <template x-if="video.duration">
+                                <div class="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white/80
+                                            text-[11px] px-2 py-0.5 rounded-lg font-light tracking-wider"
+                                     x-text="formatDuration(video.duration)"></div>
+                            </template>
+
+                            <!-- Favorite -->
+                            <div x-show="video.is_favorite"
+                                 class="absolute top-2.5 right-2.5 text-warm text-sm opacity-80" x-text="copy.favoriteSymbol"></div>
+
+                            <!-- Play overlay (desktop only) -->
+                            <div class="absolute inset-0 hidden sm:flex items-center justify-center
+                                        opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                <div class="w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl
+                                            flex items-center justify-center border border-white/10
+                                            transform scale-90 group-hover:scale-100 transition-transform duration-500">
+                                    <svg class="w-5 h-5 text-white/80 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="p-4 sm:p-5">
+                            <h3 class="font-serif text-[15px] text-white/80 line-clamp-2 leading-snug mb-1.5 font-light"
+                                x-text="video.title"></h3>
+                            <p class="text-[11px] text-white/35 font-light tracking-wide" x-text="video.channel"></p>
+                            <template x-if="video.notes">
+                                <p class="text-[11px] text-white/25 mt-2.5 line-clamp-1 italic font-light"
+                                   x-text="video.notes"></p>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- ═══════════ PLAYER VIEW ═══════════ -->
+        <div x-show="view === 'player'"
+             x-transition:enter="transition ease-out duration-500"
+             x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <template x-if="currentVideo">
+                <div class="fade-in">
+                    <!-- Back -->
+                    <button @click="goToLibrary()"
+                            class="flex items-center gap-2 text-white/35 hover:text-white/55 transition-colors duration-300 mb-6 sm:mb-8 text-xs tracking-[0.15em] uppercase font-light">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span x-text="copy.backLabel"></span>
+                    </button>
+
+                    <div class="max-w-4xl mx-auto">
+                        <!-- Video -->
+                        <div class="rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/[0.05]">
+                            <video controls autoplay playsinline
+                                   class="w-full bg-black"
+                                   :src="`/api/videos/${currentVideo.id}/stream`">
+                            </video>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="mt-6 sm:mt-10 space-y-6 sm:space-y-8">
+                            <div>
+                                <h1 class="text-2xl sm:text-4xl font-serif font-light leading-tight text-white/80"
+                                    x-text="currentVideo.title"></h1>
+                                <div class="flex flex-wrap items-center gap-3 sm:gap-5 mt-2 sm:mt-3 text-xs text-white/35 font-light tracking-wide">
+                                    <span x-text="currentVideo.channel"></span>
+                                    <template x-if="currentVideo.duration">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="w-1 h-1 rounded-full bg-white/15"></span>
+                                            <span x-text="formatDuration(currentVideo.duration)"></span>
+                                        </span>
+                                    </template>
+                                    <template x-if="currentVideo.file_size">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="w-1 h-1 rounded-full bg-white/15"></span>
+                                            <span x-text="formatSize(currentVideo.file_size)"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- ═══ Save to Device (prominent on mobile) ═══ -->
+                            <a :href="`/api/videos/${currentVideo.id}/download`"
+                               :download="currentVideo.title + '.mp4'"
+                               class="btn-warm font-medium px-5 py-3 rounded-2xl text-sm flex items-center justify-center gap-3 w-full sm:w-auto sm:inline-flex">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span class="font-sans" x-text="copy.saveToDevice"></span>
+                            </a>
+
+                            <!-- Actions -->
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <button @click="toggleFavorite(currentVideo)"
+                                        class="btn-ghost px-4 sm:px-5 py-2.5 rounded-2xl text-sm font-light flex items-center gap-2 transition-all duration-300"
+                                        :class="currentVideo.is_favorite
+                                            ? 'bg-warm-glow border-warm-faint text-warm-soft'
+                                            : 'text-white/40 hover:text-white/60'">
+                                    <span x-text="currentVideo.is_favorite ? copy.favoriteSymbol : copy.unfavoriteSymbol" class="text-base"></span>
+                                    <span x-text="currentVideo.is_favorite ? copy.favoritedAction : copy.favoriteAction"></span>
+                                </button>
+                                <button @click="revealInFinder(currentVideo)"
+                                        class="btn-ghost px-4 sm:px-5 py-2.5 rounded-2xl text-sm text-white/40 hover:text-white/60 font-light flex items-center gap-2">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                              d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <span class="hidden sm:inline" x-text="copy.revealLabel"></span>
+                                    <span class="sm:hidden" x-text="copy.revealLabelShort"></span>
+                                </button>
+                                <button @click="confirmDelete = currentVideo"
+                                        class="btn-ghost px-4 sm:px-5 py-2.5 rounded-2xl text-sm text-white/25 hover:text-red-300/60
+                                               hover:border-red-500/15 font-light flex items-center gap-2 transition-all duration-300">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    <span x-text="copy.deleteButton"></span>
+                                </button>
+                            </div>
+
+                            <!-- Notes / Journal -->
+                            <div class="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 border-white/[0.04]">
+                                <div class="flex items-center justify-between mb-3 sm:mb-4">
+                                    <label class="text-[11px] text-white/30 uppercase tracking-[0.2em] font-light" x-text="copy.notesLabel"></label>
+                                    <span x-show="notesSaved" x-transition
+                                          class="text-[11px] text-emerald-400/50 font-light tracking-wide">saved</span>
+                                </div>
+                                <textarea
+                                    class="w-full bg-transparent text-white/60 placeholder-white/15
+                                           resize-y min-h-[150px] sm:min-h-[180px] leading-[1.8] font-light text-sm
+                                           focus:text-white/80 transition-colors duration-300"
+                                    x-model="currentVideo.notes"
+                                    @input.debounce.500ms="saveNotes()"
+                                    :placeholder="copy.notesPlaceholder"></textarea>
+                            </div>
+
+                            <!-- Description -->
+                            <template x-if="currentVideo.description">
+                                <details class="group">
+                                    <summary class="text-[11px] text-white/25 uppercase tracking-[0.2em] cursor-pointer
+                                                    hover:text-white/40 transition-colors duration-300 font-light">
+                                        Original Description
+                                    </summary>
+                                    <div class="mt-4 glass rounded-2xl p-5 sm:p-6 border-white/[0.03]">
+                                        <p class="text-xs text-white/30 leading-[1.8] whitespace-pre-line font-light"
+                                           x-text="currentVideo.description"></p>
+                                    </div>
+                                </details>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <footer x-show="view === 'library' && systemInfo"
+            class="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-10 mt-8 sm:mt-12 relative z-[1]">
+        <div class="border-t border-white/[0.04] pt-6 sm:pt-8">
+            <div class="flex flex-wrap items-center gap-x-6 sm:gap-x-8 gap-y-2 text-[11px] text-white/20 font-light tracking-wider">
+                <span x-text="systemInfo?.video_count + ' ' + (systemInfo?.video_count !== 1 ? copy.itemPlural : copy.itemSingular)"></span>
+                <span x-text="systemInfo?.total_size_mb + ' MB'"></span>
+                <template x-if="systemInfo?.local_ips?.length > 0">
+                    <span class="flex items-center gap-2">
+                        <span class="w-1 h-1 rounded-full bg-white/15"></span>
+                        phone:
+                        <span class="text-white/30 font-mono text-[10px]"
+                              x-text="'http://' + systemInfo.local_ips[0] + ':' + systemInfo.port"></span>
+                    </span>
+                </template>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

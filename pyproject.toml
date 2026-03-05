@@ -1,0 +1,19 @@
+[project]
+name = "breathwork"
+version = "0.1.0"
+description = "Local breathwork video library - download, watch offline, take notes"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "sqlalchemy>=2.0",
+    "aiosqlite>=0.20.0",
+    "aiofiles>=24.1.0",
+    "yt-dlp>=2024.0",
+    "pydantic>=2.0",
+    "jinja2>=3.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,126 @@
+/* Video Library — Structural CSS (theme-agnostic) */
+
+/* ===== BASE ===== */
+* { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-base);
+}
+
+h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* ===== BACKGROUND CONTAINER ===== */
+.bg-atmosphere {
+    position: relative;
+    min-height: 100vh;
+}
+
+/* ===== GLASS CARDS ===== */
+.glass {
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+}
+
+.glass-hover {
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-hover:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--border-hover);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        0 0 40px var(--shadow-accent);
+    transform: translateY(-2px);
+}
+
+/* Mobile: no hover transform (causes jank on touch) */
+@media (hover: none) {
+    .glass-hover:hover {
+        transform: none;
+    }
+}
+
+/* ===== VIDEO PLAYER ===== */
+video { outline: none; }
+video::-webkit-media-controls-panel {
+    border-radius: 0 0 1rem 1rem;
+}
+
+/* ===== INPUTS ===== */
+textarea:focus, input:focus { outline: none; }
+
+.input-glow:focus {
+    border-color: var(--accent-focus);
+    box-shadow: 0 0 20px var(--accent-focus-glow);
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-warm {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--accent-contrast);
+    transition: all 0.3s ease;
+}
+.btn-warm:hover {
+    background: linear-gradient(135deg, var(--accent-light), var(--accent));
+    box-shadow: 0 4px 20px var(--accent-glow);
+}
+.btn-warm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    transition: all 0.3s ease;
+}
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== TEXT UTILITIES ===== */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+    background: var(--accent-selection);
+}
+
+/* ===== TRANSITIONS ===== */
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,78 @@
+/* Classy Theme — Refined, Minimal, Muted Gold */
+
+:root {
+    --bg-base: #111111;
+    --bg-surface: rgba(255, 255, 255, 0.035);
+    --bg-surface-hover: rgba(255, 255, 255, 0.06);
+    --accent: #c4a46c;
+    --accent-dark: #a8894f;
+    --accent-light: #d4b87c;
+    --accent-soft: rgba(196, 164, 108, 0.6);
+    --accent-faint: rgba(196, 164, 108, 0.15);
+    --accent-glow: rgba(196, 164, 108, 0.06);
+    --accent-focus: rgba(196, 164, 108, 0.3);
+    --accent-focus-glow: rgba(196, 164, 108, 0.04);
+    --accent-selection: rgba(196, 164, 108, 0.2);
+    --accent-contrast: #111111;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --shadow-accent: rgba(0, 0, 0, 0.2);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.06);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.14);
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== ANIMATED BACKGROUND — Barely There ===== */
+.bg-atmosphere::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(196, 164, 108, 0.02) 0%, transparent 70%);
+    animation: gentle-drift 60s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gentle-drift {
+    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+    50% { transform: translate(1%, -1%); opacity: 1; }
+}
+
+/* ===== SUBTLE CIRCLE (empty state) ===== */
+.breathing-orb {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196, 164, 108, 0.1) 0%, transparent 70%);
+    border: 1px solid rgba(196, 164, 108, 0.1);
+    animation: subtle-pulse 4s ease-in-out infinite;
+    filter: none;
+}
+
+@keyframes subtle-pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.95);
+        box-shadow: none;
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+        box-shadow: 0 0 40px rgba(196, 164, 108, 0.04);
+    }
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-glow {
+    background: linear-gradient(90deg,
+        rgba(168, 137, 79, 0.8) 0%,
+        rgba(196, 164, 108, 0.9) 50%,
+        rgba(168, 137, 79, 0.8) 100%);
+    box-shadow: 0 0 8px rgba(196, 164, 108, 0.2);
+}
+
+/* ===== THEME TEXT COLORS ===== */
+.text-warm { color: #c4a46c; }
+.text-warm-soft { color: rgba(196, 164, 108, 0.6); }
+.border-warm { border-color: rgba(196, 164, 108, 0.15); }

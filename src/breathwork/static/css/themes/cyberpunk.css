@@ -1,0 +1,96 @@
+/* Cyberpunk Theme — Neon Cyan / Matrix */
+
+:root {
+    --bg-base: #080812;
+    --bg-surface: rgba(0, 240, 255, 0.03);
+    --bg-surface-hover: rgba(0, 240, 255, 0.07);
+    --accent: #00f0ff;
+    --accent-dark: #00b8c4;
+    --accent-light: #60fcff;
+    --accent-soft: rgba(0, 240, 255, 0.6);
+    --accent-faint: rgba(0, 240, 255, 0.15);
+    --accent-glow: rgba(0, 240, 255, 0.08);
+    --accent-focus: rgba(0, 240, 255, 0.4);
+    --accent-focus-glow: rgba(0, 240, 255, 0.08);
+    --accent-selection: rgba(0, 240, 255, 0.25);
+    --accent-contrast: #080812;
+    --border-subtle: rgba(0, 240, 255, 0.08);
+    --border-hover: rgba(0, 240, 255, 0.2);
+    --shadow-accent: rgba(0, 240, 255, 0.05);
+    --scrollbar-thumb: rgba(0, 240, 255, 0.08);
+    --scrollbar-thumb-hover: rgba(0, 240, 255, 0.18);
+    --font-serif: 'Orbitron', 'Rajdhani', sans-serif;
+    --font-sans: 'Share Tech Mono', 'JetBrains Mono', monospace;
+}
+
+/* ===== ANIMATED BACKGROUND — Scanlines + Neon Pulse ===== */
+.bg-atmosphere::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 240, 255, 0.015) 2px,
+            rgba(0, 240, 255, 0.015) 4px
+        ),
+        radial-gradient(ellipse at 20% 80%, rgba(0, 240, 255, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 45, 124, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(120, 0, 255, 0.03) 0%, transparent 60%);
+    animation: cyber-pulse 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes cyber-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ===== NEON RING (empty state) ===== */
+.breathing-orb {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid #00f0ff;
+    box-shadow:
+        0 0 20px rgba(0, 240, 255, 0.15),
+        inset 0 0 20px rgba(0, 240, 255, 0.05);
+    animation: neon-pulse 2s ease-in-out infinite;
+    filter: none;
+}
+
+@keyframes neon-pulse {
+    0%, 100% {
+        box-shadow:
+            0 0 15px rgba(0, 240, 255, 0.1),
+            inset 0 0 15px rgba(0, 240, 255, 0.03);
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+    50% {
+        box-shadow:
+            0 0 40px rgba(0, 240, 255, 0.3),
+            0 0 80px rgba(0, 240, 255, 0.1),
+            inset 0 0 30px rgba(0, 240, 255, 0.08);
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-glow {
+    background: linear-gradient(90deg,
+        rgba(0, 184, 196, 0.8) 0%,
+        rgba(0, 240, 255, 0.95) 50%,
+        rgba(0, 184, 196, 0.8) 100%);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+}
+
+/* ===== THEME TEXT COLORS ===== */
+.text-warm { color: #00f0ff; }
+.text-warm-soft { color: rgba(0, 240, 255, 0.6); }
+.border-warm { border-color: rgba(0, 240, 255, 0.15); }
