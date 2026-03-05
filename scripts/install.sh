@@ -21,16 +21,73 @@ if ! command -v uv &> /dev/null; then
 fi
 echo "  ✓ uv found: $(which uv)"
 
-# 2. Create data directories
+# 2. Check for ffmpeg, install if missing
+if ! command -v ffmpeg &> /dev/null; then
+    echo "  → ffmpeg not found — installing..."
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if command -v brew &> /dev/null; then
+            brew install ffmpeg
+        else
+            echo "  → Homebrew not found — installing Homebrew first..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            # Add brew to PATH for Apple Silicon and Intel Macs
+            if [[ -f /opt/homebrew/bin/brew ]]; then
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            elif [[ -f /usr/local/bin/brew ]]; then
+                eval "$(/usr/local/bin/brew shellenv)"
+            fi
+            brew install ffmpeg
+        fi
+    elif [[ "$(uname)" == "Linux" ]]; then
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y ffmpeg
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm ffmpeg
+        else
+            echo "  ✗ Could not install ffmpeg — please install it manually"
+            exit 1
+        fi
+    fi
+fi
+if command -v ffmpeg &> /dev/null; then
+    echo "  ✓ ffmpeg found: $(ffmpeg -version 2>&1 | head -1)"
+else
+    echo "  ✗ ffmpeg installation failed — please install it manually"
+    echo "    macOS:  brew install ffmpeg"
+    echo "    Linux:  sudo apt install ffmpeg"
+    exit 1
+fi
+
+# 3. Check for deno (required by yt-dlp for YouTube extraction)
+if ! command -v deno &> /dev/null; then
+    echo "  → deno not found — installing (required by yt-dlp)..."
+    if [[ "$(uname)" == "Darwin" ]]; then
+        brew install deno
+    elif [[ "$(uname)" == "Linux" ]]; then
+        curl -fsSL https://deno.land/install.sh | sh
+        export PATH="$HOME/.deno/bin:$PATH"
+    fi
+fi
+if command -v deno &> /dev/null; then
+    echo "  ✓ deno found: $(deno --version 2>&1 | head -1)"
+else
+    echo "  ✗ deno installation failed — please install it manually"
+    echo "    See: https://docs.deno.com/runtime/getting_started/installation/"
+    exit 1
+fi
+
+# 4. Create data directories
 mkdir -p data/videos data/thumbnails data/logs
 echo "  ✓ Data directories ready"
 
-# 3. Install Python dependencies
+# 5. Install Python dependencies
 echo "  → Installing dependencies..."
 uv sync --quiet
 echo "  ✓ Dependencies installed"
 
-# 4. Choose a theme
+# 6. Choose a theme
 echo ""
 echo "  Choose a theme for your library:"
 echo ""
@@ -47,7 +104,7 @@ esac
 echo "{\"theme\": \"${THEME_ID}\"}" > data/theme.json
 echo "  ✓ Theme set to: ${THEME_ID}"
 
-# 5. Initialize database
+# 7. Initialize database
 echo "  → Initializing database..."
 uv run python -c "
 from breathwork.database import init_db
@@ -56,8 +113,9 @@ asyncio.run(init_db())
 "
 echo "  ✓ Database initialized"
 
-# 6. Install auto-start service
+# 8. Install auto-start service
 UV_PATH="$(which uv)"
+HOME_DIR="$HOME"
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # ───── macOS: launchd ─────
@@ -66,6 +124,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
     sed -e "s|__UV_PATH__|${UV_PATH}|g" \
         -e "s|__PROJECT_DIR__|${PROJECT_DIR}|g" \
+        -e "s|__HOME_DIR__|${HOME_DIR}|g" \
         "$PROJECT_DIR/scripts/com.breathwork.app.plist" > "$PLIST_DST"
 
     launchctl unload "$PLIST_DST" 2>/dev/null || true
@@ -100,7 +159,7 @@ with open('${SYSTEMD_DIR}/breathwork.service', 'w') as f:
     fi
 fi
 
-# 7. Wait a moment for service to start, then check
+# 9. Wait a moment for service to start, then check
 sleep 2
 if curl -s --max-time 3 http://localhost:8765/api/system/info > /dev/null 2>&1; then
     echo "  ✓ Server is running!"
@@ -109,7 +168,7 @@ else
     echo "    Check with: curl http://localhost:8765/api/system/info"
 fi
 
-# 8. Get local IP
+# 10. Get local IP
 LOCAL_IP="127.0.0.1"
 if [[ "$(uname)" == "Darwin" ]]; then
     LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || echo "127.0.0.1")

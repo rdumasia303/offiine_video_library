@@ -58,3 +58,4 @@ class SystemInfo(BaseModel):
     video_count: int
     total_size_mb: float
     theme: str = "breathwork"
+    ffmpeg_available: bool = False

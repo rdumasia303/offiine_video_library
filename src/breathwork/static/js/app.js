@@ -43,6 +43,7 @@ document.addEventListener('alpine:init', () => {
             await this.loadVideos();
             this.connectSSE();
             this.loadSystemInfo();
+            setInterval(() => this.pollDownloads(), 3000);
         },
 
         async loadVideos() {
@@ -68,13 +69,21 @@ document.addEventListener('alpine:init', () => {
         handleProgress(data) {
             const idx = this.downloads.findIndex(d => d.id === data.task_id);
             if (idx >= 0) {
-                this.downloads[idx].progress = data.progress;
-                this.downloads[idx].status = data.status;
+                this._applyDownloadStatus(
+                    this.downloads[idx], data.status, data.progress, data.error
+                );
             }
-            if (data.status === 'completed') {
+        },
+
+        _applyDownloadStatus(dl, status, progress, errorMsg) {
+            const wasActive = ['pending', 'downloading', 'processing'].includes(dl.status);
+            if (progress != null) dl.progress = progress;
+            dl.status = status;
+            if (dl.title == null && status === 'completed') dl.title = dl.url;
+
+            if (wasActive && status === 'completed') {
                 this.showToast('Download complete!', 'success');
                 this.loadVideos();
-                // Auto-close modal after download finishes (if no new URL is being typed)
                 if (this.showDownloadModal && !this.downloadUrl.trim()) {
                     setTimeout(() => {
                         if (!this.downloadUrl.trim()) {
@@ -83,9 +92,26 @@ document.addEventListener('alpine:init', () => {
                         }
                     }, 1500);
                 }
-            } else if (data.status === 'failed') {
-                this.showToast('Download failed: ' + (data.error || 'Unknown error'), 'error');
+            } else if (wasActive && status === 'failed') {
+                this.showToast('Download failed: ' + (errorMsg || 'Unknown error'), 'error');
             }
+        },
+
+        async pollDownloads() {
+            const hasActive = this.downloads.some(d =>
+                ['pending', 'downloading', 'processing'].includes(d.status)
+            );
+            if (!hasActive) return;
+
+            try {
+                const tasks = await api.getDownloads();
+                for (const dl of this.downloads) {
+                    const server = tasks.find(t => t.id === dl.id);
+                    if (!server) continue;
+                    this._applyDownloadStatus(dl, server.status, server.progress, server.error_message);
+                    if (server.title) dl.title = server.title;
+                }
+            } catch (e) { /* network error during poll */ }
         },
 
         get filteredVideos() {
@@ -130,7 +156,7 @@ document.addEventListener('alpine:init', () => {
                 this.downloadUrl = '';
                 this.showToast('Download started!', 'success');
             } catch (e) {
-                this.showToast('Failed to start download', 'error');
+                this.showToast(e.message || 'Failed to start download', 'error');
             }
             this.downloadSubmitting = false;
         },

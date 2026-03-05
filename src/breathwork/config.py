@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
@@ -21,3 +22,9 @@ def _load_theme() -> str:
 
 
 THEME = _load_theme()
+
+FFMPEG_PATH = shutil.which("ffmpeg")
+FFMPEG_AVAILABLE = FFMPEG_PATH is not None
+
+DENO_PATH = shutil.which("deno")
+DENO_AVAILABLE = DENO_PATH is not None

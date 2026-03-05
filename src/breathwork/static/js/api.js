@@ -35,6 +35,10 @@ const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url }),
         });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Download request failed');
+        }
         return res.json();
     },
 

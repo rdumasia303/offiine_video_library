@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _require_ffmpeg() -> None:
+    from .. import config
+
+    if not config.FFMPEG_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="ffmpeg is not installed. Install it with: brew install ffmpeg (macOS) or sudo apt install ffmpeg (Linux)",
+        )
+
+
 async def _run_download(task_id: int, url: str) -> None:
     """Background task: run yt-dlp and update DB on completion."""
     from ..database import async_session
@@ -152,6 +162,7 @@ async def start_download(
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
 ):
+    _require_ffmpeg()
     task = DownloadTask(url=req.url, status="pending")
     session.add(task)
     await session.commit()

@@ -19,8 +19,10 @@ class DownloadService:
     def __init__(self) -> None:
         self.progress_listeners: dict[int, asyncio.Queue[str]] = {}
         self.shutting_down = False
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     def _broadcast(self, task_id: int, data: dict[str, Any]) -> None:
+        """Broadcast from the event loop thread."""
         data["task_id"] = task_id
         msg = json.dumps(data)
         for queue in list(self.progress_listeners.values()):
@@ -29,13 +31,33 @@ class DownloadService:
             except asyncio.QueueFull:
                 pass
 
+    def _broadcast_threadsafe(self, task_id: int, data: dict[str, Any]) -> None:
+        """Broadcast from a worker thread (e.g. yt-dlp progress hooks)."""
+        loop = self._loop
+        if loop is None or loop.is_closed():
+            return
+        data["task_id"] = task_id
+        msg = json.dumps(data)
+
+        def _enqueue():
+            for queue in list(self.progress_listeners.values()):
+                try:
+                    queue.put_nowait(msg)
+                except asyncio.QueueFull:
+                    pass
+
+        try:
+            loop.call_soon_threadsafe(_enqueue)
+        except RuntimeError:
+            pass
+
     def _make_progress_hook(self, task_id: int):
         def hook(d: dict[str, Any]) -> None:
             if d["status"] == "downloading":
                 total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
                 downloaded = d.get("downloaded_bytes", 0)
                 pct = downloaded / total if total else 0
-                self._broadcast(
+                self._broadcast_threadsafe(
                     task_id,
                     {
                         "progress": round(pct, 3),
@@ -45,12 +67,14 @@ class DownloadService:
                     },
                 )
             elif d["status"] == "finished":
-                self._broadcast(task_id, {"progress": 1.0, "status": "processing"})
+                self._broadcast_threadsafe(task_id, {"progress": 1.0, "status": "processing"})
 
         return hook
 
     def _download_sync(self, task_id: int, url: str) -> dict[str, Any]:
         """Synchronous download — run via asyncio.to_thread."""
+        deno_config = {"path": config.DENO_PATH} if config.DENO_PATH else {}
+
         ydl_opts = {
             "format": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best",
             "merge_output_format": "mp4",
@@ -64,6 +88,8 @@ class DownloadService:
                     "format": "jpg",
                 }
             ],
+            "js_runtimes": {"deno": deno_config},
+            "remote_components": {"ejs:github"},
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -72,6 +98,7 @@ class DownloadService:
 
     async def download(self, task_id: int, url: str) -> dict[str, Any]:
         """Download a video asynchronously."""
+        self._loop = asyncio.get_running_loop()
         return await asyncio.to_thread(self._download_sync, task_id, url)
 
     def add_listener(self) -> tuple[int, asyncio.Queue[str]]:

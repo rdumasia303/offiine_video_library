@@ -80,4 +80,5 @@ async def get_system_info(session: AsyncSession = Depends(get_session)):
         video_count=video_count,
         total_size_mb=round(total_bytes / (1024 * 1024), 1),
         theme=config.THEME,
+        ffmpeg_available=config.FFMPEG_AVAILABLE,
     )

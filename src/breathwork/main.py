@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -11,10 +12,22 @@ from .routers import downloads, system, videos
 from .services.downloader import download_service
 from .themes import get_theme
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    if not config.FFMPEG_AVAILABLE:
+        logger.warning(
+            "ffmpeg not found! Video downloads will fail. "
+            "Install with: brew install ffmpeg (macOS) or sudo apt install ffmpeg (Linux)"
+        )
+    if not config.DENO_AVAILABLE:
+        logger.warning(
+            "deno not found! YouTube extraction may fail or have missing formats. "
+            "Install with: brew install deno (macOS) or curl -fsSL https://deno.land/install.sh | sh (Linux)"
+        )
     yield
     # Signal SSE listeners to stop on shutdown
     download_service.shutting_down = True

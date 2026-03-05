@@ -44,7 +44,7 @@ if [[ -d "$PROJECT_DIR/data" ]]; then
     echo "  You have ${VIDEO_COUNT} videos (${TOTAL_SIZE} total) in data/"
     echo ""
     read -p "  Delete all downloaded videos and data? [y/N]: " DELETE_DATA
-    if [[ "${DELETE_DATA,,}" == "y" ]]; then
+    if [[ "$DELETE_DATA" == [yY] ]]; then
         rm -rf "$PROJECT_DIR/data"
         echo "  ✓ Data directory deleted"
     else
@@ -57,7 +57,7 @@ fi
 # 3. Ask about the project itself
 echo ""
 read -p "  Delete the entire project directory? [y/N]: " DELETE_PROJECT
-if [[ "${DELETE_PROJECT,,}" == "y" ]]; then
+if [[ "$DELETE_PROJECT" == [yY] ]]; then
     echo "  → Removing $PROJECT_DIR ..."
     cd /
     rm -rf "$PROJECT_DIR"
