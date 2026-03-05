@@ -210,6 +210,65 @@ Create three files:
 Then add one import to `src/breathwork/themes/__init__.py` and one option to `scripts/install.sh`.
 
 ---
+## Making an app
+
+
+🚀 Guide: Create a Borderless Desktop App for your Local Tool
+This guide will turn your local service (running on port 8675) into a standalone, distraction-free macOS App that sits in your Dock and launches without browser tabs or address bars.
+
+🛠 Prerequisites
+Google Chrome installed.
+
+Your Mac’s Hostname. (Find this in System Settings > General > Sharing, or type hostname in Terminal. It usually looks like My-Macbook.local).
+
+Step 1: Create the "App" Wrapper
+We use macOS Automator to build a tiny script that tells Chrome to run in "App Mode."
+
+Open Automator (Cmd + Space, type "Automator").
+
+Select New Document then choose Application.
+
+In the search box on the left, type "Shell" and double-click Run Shell Script.
+
+Paste the following code into the box, replacing YOUR-HOSTNAME.local with your actual hostname:
+
+Bash
+open -n -a "Google Chrome" --args "--app=http://YOUR-HOSTNAME.local:8675"
+Why use the hostname? Using http://localhost:8675 only works for the person sitting at the keyboard. Using http://macbook-pro.local:8675 ensures the shortcut is more robust and identifies the specific machine on your local network.
+
+Step 2: Save and Deploy
+Go to File > Save.
+
+Name it (e.g., "My Local Dashboard").
+
+Save it directly to your Applications folder (or Desktop).
+
+Step 3: Add a Custom Icon (The "Pro" Touch)
+By default, this will have a generic Automator icon. Let's make it look like a real app:
+
+Find a PNG icon you like (or a screenshot of the tool).
+
+Open the image in Preview.
+
+Press Cmd + A (Select All) then Cmd + C (Copy).
+
+Right-click your new App file and select Get Info.
+
+Click the small icon at the very top-left of the Info window (it will glow blue).
+
+Press Cmd + V (Paste).
+
+Step 4: Pin to the Dock
+Drag your new app from your Applications folder (or Desktop) onto the left side of your Dock.
+
+Click it.
+
+Result: Chrome launches a dedicated, borderless window that feels exactly like a native Mac application.
+
+💡 Quick Troubleshooting
+Window too big/small? You can force a specific size by adding "--window-size=1200,800" to the end of the script in Step 1.
+
+Updating the URL: If your port changes, just right-click the App, select Open with > Automator, and edit the URL.
 
 ## License
 
